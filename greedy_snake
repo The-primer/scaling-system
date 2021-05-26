@@ -1,0 +1,181 @@
+#include<Windows.h>
+#include<time.h>
+#include<conio.h>
+#include<stdio.h>
+#define MAP_MODEL "■"
+#define MAP_X 80
+#define MAP_Y 28
+#define MAP_MOVE 15
+#define MAX_LEN 100
+#define LEN 5
+#define SNAKE_HEAD "◎"
+#define SNAKE_BODY "○"
+bool flag = 1;
+//enum direction { easy = 1, medium = 2, difficult = 3 };
+struct Snake
+{
+	int x[MAX_LEN];
+	int y[MAX_LEN];
+	char direction = 'a';
+	int currectlen = LEN;
+}snake;
+struct _Food
+{
+	int x;
+	int y;
+}Food;
+int *snprt_x = snake.x, *snprt_y = snake.y;
+int *fdptr_x = &Food.x, *fdptr_y = &Food.y;
+void init_map();
+void the_food();
+void gotoxy(int x, int y);
+void initsnake();
+void movesnake();
+//int speed(int);
+int main(void)
+{
+	init_map();
+	initsnake();
+	while (true)
+	{
+
+		movesnake();
+		printf("\n\t\t\t\tmovesnake()_x:%d\t\tmovesnake()_y:%d", *snprt_x, *snprt_y);		//打印movesnake的(x,y)坐标
+		if (*fdptr_x == snake.x[0] - MAP_MOVE && *fdptr_y == snake.y[0])
+		{
+			snake.currectlen++;
+			flag = 1;
+			/*gotoxy(MAP_X / 2, MAP_Y / 2);
+			printf("成功");
+			Sleep(300);
+			gotoxy(MAP_X / 2, MAP_Y / 2);
+			printf("    ");*/
+		}
+		if (flag)
+			the_food();
+		if (snake.x[0] == MAP_MOVE || snake.x[0] == MAP_MOVE + MAP_X - 2 || snake.y[0] == 0 || snake.y[0] == MAP_Y)
+			goto exit_;
+		for (int i = 1;i <= snake.currectlen;i++)
+			if (snake.x[0] == snake.x[i] && snake.y[0] == snake.y[i])
+				goto exit_;
+		Sleep(150);
+		gotoxy(MAP_X + 2 + MAP_MOVE, MAP_Y);
+	}
+exit_:gotoxy(MAP_X / 2, MAP_Y / 2);
+	printf("\tGame Over");
+	gotoxy(MAP_X + 2 + MAP_MOVE, MAP_Y);
+	return 0;
+}
+void init_map()
+{
+	for (int i = 0 + MAP_MOVE;i < MAP_X + MAP_MOVE;i += 2)
+	{
+		gotoxy(i + 2, 0);
+		printf(MAP_MODEL);
+		gotoxy(i, MAP_Y);
+		printf(MAP_MODEL);
+	}
+	for (int i = 0;i < MAP_Y;i++)
+	{
+		gotoxy(MAP_MOVE, i);
+		printf(MAP_MODEL);
+		gotoxy(MAP_X + MAP_MOVE, i + 1);
+		printf(MAP_MODEL);
+	}
+}
+void the_food()
+{
+	int create = 1;
+part1:srand((unsigned)time(NULL));	//生成随机数种子
+	Food.x = rand() % (MAP_X - 4 + 2);
+	Food.y = rand() % (MAP_Y - 1 + 1);
+	if (Food.x == 0 && Food.y < 29 || Food.x == 1 && Food.y < 29 || Food.x == 80 && Food.y < 29 || Food.x == 79 && Food.y < 29 || Food.x < 81 && Food.y == 0 || Food.x < 81 && Food.y == 28)
+		goto part1;
+	if (Food.x % 2 == 0)	//保证食物x轴为偶数
+	{
+		for (int u = 0;u < snake.currectlen;u++)
+		{
+			if (Food.x != snake.x[u] && Food.y != snake.y[u])
+			{
+				gotoxy(Food.x + MAP_MOVE, Food.y);
+				printf(MAP_MODEL);
+				//printf("Food.x:%d,Food.y:%d", Food.x, Food.y);
+				flag = 0;
+			}
+		}
+	}
+}
+void initsnake()
+{
+	*snprt_x = MAP_X / 2 + MAP_MOVE, *snprt_y = MAP_Y / 2;
+	gotoxy(*snprt_x, *snprt_y);
+	printf(SNAKE_HEAD);
+	for (int u = 1;u < snake.currectlen;u++)
+	{
+		snake.x[u] = snake.x[u - 1] + 2;	//[u=1]说明这是第一个身体坐标，找到身体和头的关系
+		snake.y[u] = snake.y[u - 1];
+		gotoxy(snake.x[u], snake.y[u]);
+		printf(SNAKE_BODY);
+	}
+}
+void movesnake()
+{
+	if (_kbhit())
+	{
+		fflush(stdin);//冲洗缓冲区函数
+		char ch = _getch();
+		if (ch == 'a' || ch == 'd' || ch == 'w' || ch == 's' || ch == 'A' || ch == 'W' || ch == 'D' || ch == 'S')
+			if (ch != snake.direction + 3 && ch != snake.direction - 3 && ch != snake.direction + 4 && ch != snake.direction - 4)
+				snake.direction = ch;
+	}
+	gotoxy(snake.x[snake.currectlen - 1], snake.y[snake.currectlen - 1]);
+	printf("  ");
+	for (int i = snake.currectlen - 1;i > 0;i--)
+	{
+		snake.x[i] = snake.x[i - 1];
+		snake.y[i] = snake.y[i - 1];
+		gotoxy(snake.x[i], snake.y[i]);
+		printf(SNAKE_BODY);
+	}
+	switch (snake.direction)
+	{
+	case 'a':
+	case 'A':
+		snake.x[0] -= 2;
+		break;
+	case 'd':
+	case 'D':
+		snake.x[0] += 2;
+		break;
+	case 's':
+	case 'S':
+		snake.y[0]++;
+		break;
+	case 'w':
+	case 'W':
+		snake.y[0]--;
+		break;
+	}
+	gotoxy(snake.x[0], snake.y[0]);
+	printf(SNAKE_HEAD);
+	gotoxy(MAP_X + 2 + MAP_MOVE, MAP_Y);
+}
+//int speed()		//设置初速度
+//{
+//	gotoxy(MAP_X / 2 + MAP_MOVE, MAP_Y - 3);
+//	printf("please enter a integer:\n");
+//	int ch = getchar();
+//	switch(ch)
+//		case 'a':
+//		case 'A':
+//			printf("A:easy\t\t");
+//		case 'b':
+//		case:'B':
+//			printf()
+//}
+void gotoxy(int x, int y)   //调整函数坐标
+{
+	COORD pos{ x,y };
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleCursorPosition(hOut, pos);
+}
